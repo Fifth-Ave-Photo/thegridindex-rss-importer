@@ -1,0 +1,1107 @@
+/**
+ * TheGridIndex RSS Importer — admin page styles.
+ *
+ * v1.0.63 — Extracted from the inline <style> block previously emitted by
+ * render_admin_page() into a standalone stylesheet enqueued via
+ * wp_enqueue_style(). Layered on top of theme-options.css (the base shell
+ * styles); contains all importer-specific overrides — hero refinement,
+ * card/pill/toolbar styling, feed list, diagnostics table, toast notifications.
+ */
+
+/* RSS-importer-specific extras layered on top of theme-options.css */
+
+/* ---------- ADMIN BODY BACKGROUND (v1.0.68) ---------- */
+/* The plugin's wrap div is `.gridindex-theme-options` and it paints
+   itself with var(--gi-bg). But the WordPress admin container behind
+   it (#wpbody, #wpbody-content) defaults to white, so any time our
+   wrap is shorter than the admin viewport, a white band shows up
+   below our content. Worse, the area immediately above our hero is
+   also wp-admin chrome — that's the white strip visible in the
+   screenshot QA.
+
+   Fix: when our screen is active, paint the wp-admin containers
+   themselves with our background colors. Scoped to gi-options-host
+   (only set on our screen) so we don't leak into other plugins'
+   admin pages. The dark variant only applies when the user is in
+   dark mode (gi-options-host--dark on body). Light-mode users get
+   a matching light-grey background that blends with the white
+   inside the hero block. */
+body.gi-options-host #wpbody,
+body.gi-options-host #wpbody-content,
+body.gi-options-host #wpcontent {
+	background:#f4f5f8; /* matches --gi-bg in light mode */
+}
+body.gi-options-host--dark #wpbody,
+body.gi-options-host--dark #wpbody-content,
+body.gi-options-host--dark #wpcontent,
+body.gi-options-host--dark.wp-admin {
+	background:#0B0F14; /* matches --gi-bg in dark mode */
+}
+/* Kill the bottom padding of #wpbody-content (WP core sets it to
+   65px) and instead pad inside our wrap. Otherwise the dark fills
+   stop short of the admin footer area. */
+body.gi-options-host #wpbody-content { padding-bottom:0 !important; }
+/* And nudge the wp-admin footer text to match the new dark surround
+   so it doesn't read as a stray white line. */
+body.gi-options-host--dark #wpfooter { color:#94a3b8; }
+body.gi-options-host--dark #wpfooter a { color:#cbd5e1; }
+
+/* ---------- HERO REFINEMENT (v1.0.52, distinct treatment v1.0.57, simplified v1.0.68) ---------- */
+/* v1.0.68 — Dropped the eyebrow text entirely. The hero now leads
+   with a single clean title; the small teal accent rule that used to
+   sit beside the eyebrow now sits above the title as a standalone
+   visual signature. Result: a balanced wordmark with a single focal
+   element instead of two text lines fighting for hierarchy. */
+.gridindex-theme-options .gi-hero__inner {
+	gap:18px;
+}
+.gridindex-theme-options .gi-hero__brand {
+	display:flex;
+	flex-direction:column;
+	gap:0;
+}
+/* Standalone teal accent rule above the title — replaces what used
+   to be the eyebrow's trailing dash. Short (32px), thin (2px),
+   intentional. */
+.gridindex-theme-options .gi-hero__accent-rule {
+	display:block;
+	width:32px;
+	height:2px;
+	background:var(--gi-accent);
+	border-radius:2px;
+	opacity:.9;
+	margin:0 0 16px;
+}
+.gridindex-theme-options .gi-hero__title {
+	/* v1.0.69 — Tuned down from 42px → 36px to fit the full plugin
+	   name ("TheGridIndex RSS Importer", 25 chars) on a single line
+	   on typical desktop widths while still reading as a hero
+	   heading. At narrower widths the title wraps once at the
+	   word boundary between "TheGridIndex" and "RSS" — a clean
+	   brand/product split, not mid-word. */
+	font-size:36px;
+	line-height:1.08;
+	letter-spacing:-.012em;
+	margin:0;
+	font-weight:600;
+}
+.gridindex-theme-options .gi-hero__sub {
+	font-size:13.5px;
+	line-height:1.6;
+	opacity:.82;
+	max-width:64ch;
+	margin:14px 0 0;
+}
+/* Pills row */
+.gridindex-theme-options .gi-hero__meta {
+	gap:8px;
+	margin-top:18px;
+}
+.gridindex-theme-options .gi-hero__meta .gi-badge {
+	padding:4px 10px;
+	font-size:11px;
+	letter-spacing:.04em;
+	font-weight:600;
+}
+/* v1.0.53 — Muted badge variant for "theme not active" state. Lower
+   contrast than --success / --warning so it reads as an informational
+   note, not a problem to fix. v1.0.60 — Restored after the v1.0.59
+   CTA-button experiment was reverted. */
+.gridindex-theme-options .gi-badge.gi-badge--muted {
+	color:var(--gi-faint, #94a3b8);
+	border-color:rgba(148,163,184,.30);
+	background:rgba(148,163,184,.06);
+}
+
+/* ---------- READABILITY OVERRIDES (v1.0.19) ---------- */
+/* The base theme-options stylesheet uses heavy opacity on labels and
+   muted text. On the dark importer card backgrounds those drop into
+   illegible territory. Bump them globally inside the importer screen. */
+.gridindex-theme-options .gi-card__title { opacity:1; font-size:18px; letter-spacing:.01em; }
+.gridindex-theme-options .gi-card__sub   { opacity:.85; font-size:13px; line-height:1.5; }
+.gridindex-theme-options .gi-field__label{ opacity:1; font-weight:600; font-size:13px; letter-spacing:.01em; }
+.gridindex-theme-options .gi-field__desc { opacity:.75; font-size:12px; line-height:1.5; }
+.gridindex-theme-options .gi-card__body  { padding-top:18px; padding-bottom:18px; }
+.gridindex-theme-options .gi-card        { margin-bottom:0; }
+.gridindex-theme-options .gi-grid--3     { gap:20px 24px; }
+
+/* ---------- STATUS PILL / BANNER (v1.0.20) ---------- */
+/* Quiet inline pill when everything's fine. Loud full-width banner
+   only when attention is needed (status != publish). */
+.gridindex-theme-options .gip-status-pill {
+	display:inline-flex;
+	align-items:center;
+	gap:6px;
+	padding:5px 12px;
+	border-radius:999px;
+	font:600 11px/1 inherit;
+	letter-spacing:.04em;
+	text-transform:uppercase;
+	margin:14px 0 0 0;
+	cursor:help;
+}
+.gridindex-theme-options .gip-status-pill--ok {
+	background:rgba(16,185,129,.12);
+	color:#10b981;
+	border:1px solid rgba(16,185,129,.3);
+}
+.gridindex-theme-options .gip-status-banner--warn {
+	margin:16px 0 0 0;
+	padding:14px 18px;
+	border-radius:8px;
+	background:#fff3cd;
+	border:1px solid #ffc107;
+	color:#664d03;
+	display:flex;
+	align-items:center;
+	justify-content:space-between;
+	gap:16px;
+	flex-wrap:wrap;
+}
+.gridindex-theme-options .gip-status-banner__msg { flex:1; min-width:240px; }
+.gridindex-theme-options .gip-status-banner__btn {
+	background:#0c7a3d !important;
+	border-color:#0c7a3d !important;
+	color:#fff !important;
+}
+
+/* ---------- EMPTY STATE NUDGE (v1.0.29) ---------- */
+.gridindex-theme-options .gip-empty-nudge {
+	padding:14px 16px;
+	margin-bottom:14px;
+	background:rgba(16,185,129,.08);
+	border:1px solid rgba(16,185,129,.32);
+	border-radius:var(--gi-radius-sm);
+	font-size:13px;
+	line-height:1.5;
+}
+.gridindex-theme-options .gip-empty-nudge strong {
+	display:block;
+	margin-bottom:4px;
+}
+
+/* ---------- FEEDS TOOLBAR ---------- */
+/* (rule moved to the v1.0.22 save-indicator block below — kept the
+   header here to preserve change-history readability.) */
+
+/* ---------- TABS ---------- */
+.gridindex-theme-options .gip-tabs {
+	display:flex; gap:4px; flex-wrap:wrap;
+	margin:0 0 22px 0;
+	border-bottom:1px solid var(--gi-border);
+}
+.gridindex-theme-options .gip-tab {
+	background:transparent;
+	border:0;
+	border-bottom:2px solid transparent;
+	color:var(--gi-fg, inherit);
+	opacity:.75;
+	padding:11px 20px;
+	font:600 14px/1 inherit;
+	cursor:pointer;
+	border-radius:6px 6px 0 0;
+	transition:opacity .15s ease, border-color .15s ease, background .15s ease;
+}
+.gridindex-theme-options .gip-tab:hover { opacity:1; background:var(--gi-card-soft); }
+.gridindex-theme-options .gip-tab.is-active {
+	opacity:1;
+	border-bottom-color:var(--gi-accent, #10b981);
+	background:var(--gi-card-soft);
+}
+.gridindex-theme-options .gip-tab-panel[hidden] { display:none !important; }
+
+/* ---------- COMPACT FEED TABLE ---------- */
+.gridindex-theme-options .gip-rss-feeds-list {
+	border:1px solid var(--gi-border);
+	border-radius:var(--gi-radius-sm);
+	overflow:hidden;
+	background:var(--gi-card-soft);
+}
+.gridindex-theme-options .gip-rss-feeds-header,
+.gridindex-theme-options .gip-rss-feed-row {
+	display:grid;
+	grid-template-columns: 32px minmax(0, 1.55fr) minmax(0, 0.9fr) 130px 110px auto;
+	align-items:center;
+	gap:10px;
+	padding:6px 10px;
+}
+.gridindex-theme-options .gip-rss-feeds-header {
+	background:rgba(255,255,255,.04);
+	border-bottom:1px solid var(--gi-border);
+	padding-top:10px; padding-bottom:10px;
+	font:600 11px/1 inherit;
+	text-transform:uppercase;
+	letter-spacing:.08em;
+	opacity:.85;
+}
+.gridindex-theme-options .gip-rss-feed-row {
+	border-bottom:1px solid var(--gi-border);
+	background:transparent;
+	border-radius:0;
+	margin:0;
+}
+.gridindex-theme-options .gip-rss-feed-row:last-child { border-bottom:0; }
+.gridindex-theme-options .gip-rss-feed-row:hover { background:rgba(255,255,255,.03); }
+.gridindex-theme-options .gip-rss-feed-row .gi-input {
+	padding:5px 9px;
+	font-size:13px;
+	height:auto;
+	line-height:1.4;
+}
+.gridindex-theme-options .gip-rss-feed-row .gi-select {
+	padding:4px 8px;
+	font-size:12px;
+	height:auto;
+	line-height:1.4;
+}
+/* v1.0.40 — Inline category picker beside Source Name. */
+.gridindex-theme-options .gip-rss-feed-row__cell--name {
+	display:flex;
+	gap:6px;
+}
+.gridindex-theme-options .gip-rss-feed-row__cell--name .gi-input {
+	flex:1 1 auto;
+	min-width:0;
+}
+.gridindex-theme-options .gip-rss-feed-row__cat {
+	flex:0 0 95px;
+	max-width:95px;
+}
+.gridindex-theme-options .gip-rss-feed-row__fetched {
+	font-size:12px;
+	opacity:.85;
+	white-space:nowrap;
+	overflow:hidden;
+	text-overflow:ellipsis;
+}
+.gridindex-theme-options .gip-rss-feed-row__fetched--never {
+	opacity:.45;
+	font-style:italic;
+}
+.gridindex-theme-options .gip-rss-feed-row__cell--actions {
+	display:flex; gap:4px; justify-content:flex-end;
+}
+.gridindex-theme-options .gip-rss-feed-row__btn {
+	padding:4px 9px;
+	font-size:12px;
+	min-width:0;
+	line-height:1;
+}
+.gridindex-theme-options .gip-rss-feed-row__detail {
+	grid-column:1 / -1;
+	padding:6px 10px 8px 42px;
+	font:11px/1.4 inherit;
+	color:var(--gi-fg, inherit);
+	opacity:.65;
+}
+.gridindex-theme-options .gip-rss-feed-row.is-detail-open .gip-rss-feed-row__detail { display:block; }
+
+/* ---------- STATUS DOT ---------- */
+.gridindex-theme-options .gip-dot {
+	display:inline-block;
+	width:10px; height:10px;
+	border-radius:50%;
+	cursor:help;
+	background:#64748b;        /* never */
+	outline-offset:2px;
+}
+.gridindex-theme-options .gip-dot:focus-visible { outline:2px solid var(--gi-accent, #10b981); }
+.gridindex-theme-options .gip-dot--ok    { background:#10b981; }
+.gridindex-theme-options .gip-dot--dup   { background:#3b82f6; }
+.gridindex-theme-options .gip-dot--empty { background:#f59e0b; }
+.gridindex-theme-options .gip-dot--error { background:#ef4444; }
+.gridindex-theme-options .gip-dot--never { background:#64748b; opacity:.5; }
+
+/* ---------- LOG BOX (unchanged) ---------- */
+.gridindex-theme-options .gip-rss-feed-row {
+	/* Reset for backward compat with cloned-row JS */
+}
+.gridindex-theme-options .gip-rss-log {
+	background:#0b0f14;
+	color:#cbd5e1;
+	padding:14px 16px;
+	border-radius:var(--gi-radius-sm);
+	border:1px solid var(--gi-border);
+	max-height:320px;
+	overflow:auto;
+	font:12px/1.55 ui-monospace,Menlo,Consolas,monospace;
+	margin:0;
+	white-space:pre-wrap;
+	word-break:break-word;
+}
+.gridindex-theme-options.gi-mode-light .gip-rss-log {
+	background:#0f172a;
+	color:#e2e8f0;
+}
+
+/* ---------- FIELD READABILITY (v1.0.39) ---------- */
+/* WordPress admin's default input CSS forces dark text color
+   (#2c3338) on focused inputs. Against our dark-mode panel that
+   renders as invisible navy-on-navy. Override to keep the focused
+   field text legible regardless of theme mode.
+   Selector is specific enough (.gridindex-theme-options + input)
+   to beat WP's wp-admin/css/forms.css rules. */
+.gridindex-theme-options input[type="text"],
+.gridindex-theme-options input[type="url"],
+.gridindex-theme-options input[type="number"],
+.gridindex-theme-options input[type="email"],
+.gridindex-theme-options input[type="search"],
+.gridindex-theme-options input[type="password"],
+.gridindex-theme-options select,
+.gridindex-theme-options textarea {
+	color: var(--gi-fg, #e6e9ee) !important;
+	background-color: rgba(255,255,255,.04) !important;
+	border-color: var(--gi-border, rgba(255,255,255,.12)) !important;
+}
+.gridindex-theme-options input[type="text"]:focus,
+.gridindex-theme-options input[type="url"]:focus,
+.gridindex-theme-options input[type="number"]:focus,
+.gridindex-theme-options input[type="email"]:focus,
+.gridindex-theme-options input[type="search"]:focus,
+.gridindex-theme-options input[type="password"]:focus,
+.gridindex-theme-options select:focus,
+.gridindex-theme-options textarea:focus {
+	color: var(--gi-fg, #e6e9ee) !important;
+	background-color: rgba(255,255,255,.07) !important;
+	border-color: rgba(16,185,129,.6) !important;
+	box-shadow: 0 0 0 2px rgba(16,185,129,.18) !important;
+	outline: none;
+}
+/* Light-mode panels override the dark surface back to white. */
+.gridindex-theme-options.gi-mode-light input[type="text"],
+.gridindex-theme-options.gi-mode-light input[type="url"],
+.gridindex-theme-options.gi-mode-light input[type="number"],
+.gridindex-theme-options.gi-mode-light input[type="email"],
+.gridindex-theme-options.gi-mode-light input[type="search"],
+.gridindex-theme-options.gi-mode-light input[type="password"],
+.gridindex-theme-options.gi-mode-light select,
+.gridindex-theme-options.gi-mode-light textarea {
+	color: #1a1f2b !important;
+	background-color: #fff !important;
+	border-color: rgba(0,0,0,.15) !important;
+}
+/* Native select dropdown option list respects the OS chrome, so we
+   only override <option> color to make sure the open list is legible
+   on browsers that inherit element colors into the option list. */
+.gridindex-theme-options select option { color: #1a1f2b; background: #fff; }
+
+/* ---------- SAVE INDICATOR (v1.0.22) ---------- */
+.gridindex-theme-options .gip-feeds-toolbar {
+	display:flex;
+	justify-content:flex-end;
+	align-items:center;
+	gap:12px;
+	margin-bottom:12px;
+}
+.gridindex-theme-options .gip-save-indicator {
+	font:600 12px/1 inherit;
+	letter-spacing:.02em;
+	opacity:0;
+	transition:opacity .2s ease;
+	min-height:14px;
+}
+.gridindex-theme-options .gip-save-indicator.is-saving { opacity:.75; color:inherit; }
+.gridindex-theme-options .gip-save-indicator.is-saved  { opacity:1;   color:#10b981; }
+.gridindex-theme-options .gip-save-indicator.is-error  { opacity:1;   color:#ef4444; }
+
+/* ---------- TOAST (v1.0.22) ---------- */
+/* Repurpose the existing .gi-notice as a top-right slide-in toast that
+   auto-dismisses, so fetch/save messages don't sit there indefinitely
+   eating vertical space. */
+.gridindex-theme-options .gi-notice.gip-toast {
+	position:fixed;
+	top:46px;
+	right:20px;
+	z-index:99999;
+	max-width:420px;
+	min-width:280px;
+	padding:12px 18px;
+	border-radius:8px;
+	box-shadow:0 10px 30px rgba(0,0,0,.35);
+	animation:gipToastIn .25s ease-out;
+}
+.gridindex-theme-options .gi-notice.gip-toast.is-leaving { animation:gipToastOut .35s ease-in forwards; }
+/* v1.0.36 — Multi-element toast (msg + Fetch now / Dismiss buttons) */
+.gridindex-theme-options .gi-notice.gip-toast .gip-toast__msg {
+	margin-bottom:10px;
+	font-size:13px;
+	line-height:1.5;
+}
+.gridindex-theme-options .gi-notice.gip-toast .gip-toast__actions {
+	display:flex;
+	gap:8px;
+}
+.gridindex-theme-options .gi-notice.gip-toast .gip-toast__btn {
+	padding:6px 12px;
+	font-size:12px;
+}
+@keyframes gipToastIn  { from { opacity:0; transform:translateY(-12px); } to { opacity:1; transform:translateY(0); } }
+@keyframes gipToastOut { from { opacity:1; transform:translateY(0);    } to { opacity:0; transform:translateY(-12px); } }
+
+/* ---------- LONG-ACTION SPINNER (v1.0.23) ---------- */
+.gridindex-theme-options .gip-spin {
+	display:inline-block;
+	width:14px; height:14px;
+	border:2px solid rgba(255,255,255,.25);
+	border-top-color:#fff;
+	border-radius:50%;
+	vertical-align:-2px;
+	margin-right:6px;
+	animation:gipSpin .8s linear infinite;
+}
+.gridindex-theme-options .gip-spin--small {
+	width:11px; height:11px; border-width:2px;
+	margin-right:0;
+}
+@keyframes gipSpin { to { transform:rotate(360deg); } }
+.gridindex-theme-options button.is-loading,
+.gridindex-theme-options a.gip-fetch-link.is-loading {
+	opacity:.85;
+	cursor:wait;
+}
+.gridindex-theme-options button.is-loading[disabled] {
+	/* Override the default disabled "looks dead" styling — the
+	   button is "working" not "broken". */
+	opacity:.9;
+	background:var(--gi-accent, #10b981);
+	color:#fff;
+}
+
+/* ---------- CATALOG TAB (v1.0.24) ---------- */
+/* v1.0.35 — View toggle (Cards / List). */
+.gridindex-theme-options .gip-catalog-viewbar {
+	display:flex; gap:0;
+	margin-bottom:18px;
+	padding:3px;
+	background:rgba(255,255,255,.05);
+	border:1px solid var(--gi-border);
+	border-radius:var(--gi-radius-sm);
+	width:fit-content;
+}
+.gridindex-theme-options .gip-catalog-viewbar__btn {
+	padding:6px 14px;
+	font-size:12px;
+	font-weight:600;
+	text-decoration:none;
+	color:inherit;
+	border-radius:4px;
+	opacity:.7;
+}
+.gridindex-theme-options .gip-catalog-viewbar__btn:hover { opacity:.95; }
+.gridindex-theme-options .gip-catalog-viewbar__btn.is-active {
+	background:rgba(16,185,129,.20);
+	color:#10b981;
+	opacity:1;
+}
+/* v1.0.35 — Breaking-news section hint under group title. */
+.gridindex-theme-options .gip-catalog-group__hint {
+	display:inline-block;
+	margin-left:10px;
+	font-weight:400;
+	font-size:11px;
+	opacity:.7;
+	text-transform:none;
+	letter-spacing:0;
+}
+/* v1.0.35 — List view rows. */
+.gridindex-theme-options .gip-catalog-list {
+	display:flex;
+	flex-direction:column;
+	border:1px solid var(--gi-border);
+	border-radius:var(--gi-radius-sm);
+	overflow:hidden;
+}
+.gridindex-theme-options .gip-catalog-list-row {
+	display:grid;
+	grid-template-columns: minmax(0, 1.4fr) minmax(0, 1.2fr) 110px 130px;
+	gap:14px;
+	align-items:center;
+	padding:10px 14px;
+	border-bottom:1px solid var(--gi-border);
+	background:transparent;
+	transition:background .12s ease;
+}
+.gridindex-theme-options .gip-catalog-list-row:last-child { border-bottom:0; }
+.gridindex-theme-options .gip-catalog-list-row:hover { background:rgba(255,255,255,.03); }
+.gridindex-theme-options .gip-catalog-list-row.is-active {
+	background:rgba(16,185,129,.07);
+}
+.gridindex-theme-options .gip-catalog-list-row.is-disabled { opacity:.5; }
+.gridindex-theme-options .gip-catalog-list-row__name { font-weight:600; font-size:13px; }
+.gridindex-theme-options .gip-catalog-list-row__host {
+	font:11px/1.3 ui-monospace,Menlo,Consolas,monospace;
+	opacity:.7;
+	overflow:hidden;
+	text-overflow:ellipsis;
+	white-space:nowrap;
+}
+.gridindex-theme-options .gip-catalog-list-row__interval { font-size:11px; opacity:.8; }
+.gridindex-theme-options .gip-catalog-list-row__action { text-align:right; }
+.gridindex-theme-options .gip-catalog-list-row__btn {
+	padding:5px 12px;
+	font-size:12px;
+}
+.gridindex-theme-options .gip-catalog-warn {
+	margin:14px 18px 0 18px;
+	padding:14px 16px;
+	background:rgba(245,158,11,.12);
+	border:1px solid rgba(245,158,11,.45);
+	border-radius:var(--gi-radius-sm);
+	display:flex;
+	align-items:center;
+	justify-content:space-between;
+	gap:14px;
+	flex-wrap:wrap;
+}
+.gridindex-theme-options .gip-catalog-warn__msg { flex:1; min-width:220px; font-size:13px; line-height:1.5; }
+.gridindex-theme-options .gip-catalog-warn__btn { white-space:nowrap; }
+.gridindex-theme-options .gip-catalog-group { margin-bottom:28px; }
+.gridindex-theme-options .gip-catalog-group:last-child { margin-bottom:0; }
+.gridindex-theme-options .gip-catalog-group__title {
+	font:600 13px/1 inherit;
+	text-transform:uppercase;
+	letter-spacing:.08em;
+	opacity:.7;
+	margin:0 0 12px 0;
+	padding-bottom:8px;
+	border-bottom:1px solid var(--gi-border);
+}
+.gridindex-theme-options .gip-catalog-grid {
+	display:grid;
+	grid-template-columns:repeat(auto-fill, minmax(220px, 1fr));
+	gap:12px;
+}
+.gridindex-theme-options .gip-catalog-card {
+	background:var(--gi-card-soft);
+	border:1px solid var(--gi-border);
+	border-radius:var(--gi-radius-sm);
+	padding:14px;
+	display:flex;
+	flex-direction:column;
+	gap:8px;
+	transition:border-color .15s ease, background .15s ease;
+}
+.gridindex-theme-options .gip-catalog-card.is-active {
+	border-color:rgba(16,185,129,.5);
+	background:rgba(16,185,129,.06);
+}
+.gridindex-theme-options .gip-catalog-card.is-disabled {
+	opacity:.5;
+}
+.gridindex-theme-options .gip-catalog-card__head {
+	display:flex;
+	justify-content:space-between;
+	align-items:flex-start;
+	gap:8px;
+}
+.gridindex-theme-options .gip-catalog-card__name {
+	font:600 14px/1.3 inherit;
+}
+.gridindex-theme-options .gip-catalog-card__badge {
+	font:600 10px/1 inherit;
+	text-transform:uppercase;
+	letter-spacing:.06em;
+	padding:3px 7px;
+	border-radius:999px;
+	background:rgba(16,185,129,.18);
+	color:#10b981;
+	white-space:nowrap;
+}
+.gridindex-theme-options .gip-catalog-card__host {
+	font:11px/1.4 ui-monospace,Menlo,Consolas,monospace;
+	opacity:.55;
+	word-break:break-all;
+}
+/* v1.0.34 — Recommended interval line on catalog cards. */
+.gridindex-theme-options .gip-catalog-card__interval {
+	font-size:11px;
+	opacity:.85;
+	letter-spacing:.02em;
+	color:inherit;
+}
+.gridindex-theme-options .gip-catalog-card__btn {
+	margin-top:auto;
+	padding:6px 10px;
+	font-size:12px;
+	text-align:center;
+	text-decoration:none;
+}
+
+/* ---------- UNINSTALL PREF (v1.0.37) ---------- */
+.gridindex-theme-options .gip-uninstall-pref {
+	margin-top:18px;
+	padding:14px 16px;
+	background:rgba(255,255,255,.04);
+	border:1px solid var(--gi-border);
+	border-radius:var(--gi-radius-sm);
+}
+.gridindex-theme-options .gip-uninstall-pref__label {
+	display:flex;
+	align-items:flex-start;
+	gap:12px;
+	cursor:pointer;
+}
+.gridindex-theme-options .gip-uninstall-pref__label input[type=checkbox] {
+	margin-top:3px;
+	flex-shrink:0;
+}
+.gridindex-theme-options .gip-uninstall-pref__label strong {
+	display:block;
+	font-size:13px;
+	margin-bottom:3px;
+}
+.gridindex-theme-options .gip-uninstall-pref__desc {
+	display:block;
+	font-size:12px;
+	line-height:1.5;
+	opacity:.85;
+}
+
+/* ---------- HIGH-FREQUENCY WARNING (v1.0.33) ---------- */
+.gridindex-theme-options .gip-freq-warn {
+	margin-top:8px;
+	padding:10px 12px;
+	background:rgba(245,158,11,.12);
+	border:1px solid rgba(245,158,11,.42);
+	border-radius:var(--gi-radius-sm);
+	font-size:12px;
+	line-height:1.5;
+}
+
+/* ---------- DUPLICATE DETECTOR (v1.0.30) ---------- */
+.gridindex-theme-options .gip-diag-dup-row {
+	padding:4px 0;
+	font-size:13px;
+	line-height:1.5;
+}
+.gridindex-theme-options .gip-diag-dup-row a {
+	font-weight:700;
+	padding-right:6px;
+}
+.gridindex-theme-options .gip-diag-dup-meta {
+	/* v1.0.32 — readability fix: was opacity:.6, dropped the date / source /
+	   hash text into hard-to-read territory on dark backgrounds. .85 keeps
+	   it visually secondary to the post-ID link without making it faint. */
+	opacity:.85;
+}
+.gridindex-theme-options .gip-diag-dup-meta code {
+	background:rgba(255,255,255,.10);
+	padding:2px 6px;
+	border-radius:3px;
+	/* v1.0.32 — was font-size:11px which was the smallest text on the page. */
+	font-size:12px;
+}
+/* v1.0.31 — KEEP / TRASH badges in the duplicate group list. */
+.gridindex-theme-options .gip-diag-dup-keep-badge,
+.gridindex-theme-options .gip-diag-dup-trash-badge {
+	display:inline-block;
+	font:700 9px/1 inherit;
+	letter-spacing:.08em;
+	padding:3px 6px;
+	border-radius:3px;
+	margin-right:6px;
+	vertical-align:1px;
+}
+.gridindex-theme-options .gip-diag-dup-keep-badge {
+	background:rgba(16,185,129,.18);
+	color:#10b981;
+}
+.gridindex-theme-options .gip-diag-dup-trash-badge {
+	background:rgba(239,68,68,.18);
+	color:#ef4444;
+}
+.gridindex-theme-options .gip-diag-dup-row--keep a {
+	color:#10b981;
+}
+/* v1.0.32 — In the duplicate-detector card specifically, the small
+   caption text (.gi-field__desc) was hard to read at the global .75
+   opacity. Lift it without affecting the rest of the page. */
+.gridindex-theme-options .gip-tab-panel[data-panel="diagnostics"] .gi-field__desc { opacity:.9; }
+
+/* ---------- SUPPORT / FAQ TAB (v1.0.43) ---------- */
+.gridindex-theme-options .gip-faq-search {
+	display:flex;
+	align-items:center;
+	gap:12px;
+	margin-bottom:20px;
+}
+.gridindex-theme-options .gip-faq-search #gip-faq-search {
+	flex:1 1 auto;
+	max-width:420px;
+}
+.gridindex-theme-options .gip-faq-search__hint {
+	font-size:12px;
+	opacity:.7;
+}
+.gridindex-theme-options .gip-faq-section {
+	margin-bottom:22px;
+}
+.gridindex-theme-options .gip-faq-section:last-child { margin-bottom:0; }
+.gridindex-theme-options .gip-faq-section__title {
+	font-size:11px;
+	font-weight:700;
+	letter-spacing:.08em;
+	text-transform:uppercase;
+	opacity:.7;
+	margin:0 0 10px;
+	padding-bottom:6px;
+	border-bottom:1px solid var(--gi-border);
+}
+.gridindex-theme-options .gip-faq-item {
+	padding:12px 14px;
+	border:1px solid var(--gi-border);
+	border-radius:var(--gi-radius-sm);
+	background:rgba(255,255,255,.03);
+	margin-bottom:8px;
+}
+.gridindex-theme-options .gip-faq-item[open] {
+	background:rgba(255,255,255,.05);
+}
+.gridindex-theme-options .gip-faq-item__q {
+	font-weight:600;
+	font-size:13px;
+	cursor:pointer;
+	list-style:none;
+	position:relative;
+	padding-right:24px;
+}
+.gridindex-theme-options .gip-faq-item__q::-webkit-details-marker { display:none; }
+.gridindex-theme-options .gip-faq-item__q::after {
+	content:'+';
+	position:absolute;
+	right:0; top:50%;
+	transform:translateY(-50%);
+	font-size:18px;
+	opacity:.6;
+	transition:transform .15s ease;
+}
+.gridindex-theme-options .gip-faq-item[open] .gip-faq-item__q::after {
+	content:'−';
+}
+.gridindex-theme-options .gip-faq-item__a {
+	margin-top:10px;
+	font-size:13px;
+	line-height:1.6;
+	opacity:.92;
+}
+.gridindex-theme-options .gip-faq-item__a p { margin:0 0 8px; }
+.gridindex-theme-options .gip-faq-item__a p:last-child { margin-bottom:0; }
+.gridindex-theme-options .gip-faq-item.is-hidden { display:none; }
+.gridindex-theme-options .gip-faq-section.is-hidden { display:none; }
+.gridindex-theme-options .gip-faq-foot {
+	margin-top:24px;
+	padding:12px 14px;
+	background:rgba(16,185,129,.05);
+	border:1px solid rgba(16,185,129,.20);
+	border-radius:var(--gi-radius-sm);
+	font-size:12px;
+	line-height:1.6;
+	opacity:.95;
+}
+
+/* ---------- SUPPORT TAB: Credits card (v1.0.55, restructured v1.0.56) ---------- */
+/* Visual separation between the FAQ card and the Credits card below it.
+   Same gi-card base — the variant class adds top margin so each card
+   breathes. */
+.gridindex-theme-options .gip-support-card { margin-top:20px; }
+
+/* Inline text link inside the Credits paragraph — small, tasteful, no
+   button styling. Inherits the theme accent color. */
+.gridindex-theme-options .gip-credits__link {
+	color:var(--gi-accent);
+	text-decoration:none;
+	font-weight:600;
+}
+.gridindex-theme-options .gip-credits__link:hover { text-decoration:underline; }
+
+.gridindex-theme-options .gip-credits__main {
+	margin-bottom:16px;
+}
+.gridindex-theme-options .gip-credits__line {
+	margin:0 0 6px;
+	font-size:13px;
+	line-height:1.55;
+}
+.gridindex-theme-options .gip-credits__line--lead {
+	font-size:14px;
+}
+.gridindex-theme-options .gip-credits__line:last-child { margin-bottom:0; }
+
+.gridindex-theme-options .gip-credits__products {
+	display:grid;
+	grid-template-columns:repeat(auto-fit, minmax(240px, 1fr));
+	gap:12px;
+	margin:14px 0 0;
+	padding:14px;
+	background:rgba(255,255,255,.03);
+	border:1px solid var(--gi-border);
+	border-radius:var(--gi-radius-sm);
+}
+.gridindex-theme-options .gip-credits__product {
+	display:flex;
+	flex-direction:column;
+	gap:3px;
+}
+.gridindex-theme-options .gip-credits__product-label {
+	font-size:10px;
+	font-weight:700;
+	letter-spacing:.12em;
+	text-transform:uppercase;
+	opacity:.6;
+}
+.gridindex-theme-options .gip-credits__product-name {
+	font-size:14px;
+	font-weight:600;
+	letter-spacing:.005em;
+}
+.gridindex-theme-options .gip-credits__product-desc {
+	font-size:12px;
+	line-height:1.5;
+	opacity:.75;
+}
+
+.gridindex-theme-options .gip-credits__version {
+	margin:14px 0 0;
+	padding-top:12px;
+	border-top:1px solid var(--gi-border);
+	font-size:11px;
+	letter-spacing:.04em;
+	opacity:.6;
+}
+
+/* v1.0.57 — Credits CTA. The button is the primary visual signal that
+   this plugin is part of The Grid Index family. Ghost-style so it's
+   clearly an action without screaming sales pitch. The hint line gives
+   short context next to the button. */
+.gridindex-theme-options .gip-credits__cta {
+	display:flex;
+	align-items:center;
+	gap:14px;
+	flex-wrap:wrap;
+	margin:16px 0 0;
+	padding:14px;
+	background:rgba(20,184,166,.06);
+	border:1px solid rgba(20,184,166,.25);
+	border-radius:var(--gi-radius-sm);
+}
+.gridindex-theme-options .gip-credits__btn {
+	flex:0 0 auto;
+	white-space:nowrap;
+	font-weight:600;
+}
+.gridindex-theme-options .gip-credits__cta-hint {
+	flex:1 1 auto;
+	font-size:12.5px;
+	line-height:1.45;
+	opacity:.85;
+}
+
+/* ---------- SUPPORT TAB: project banner (v1.0.58) ---------- */
+/* Top-of-tab project link banner. Goal: the button must be the obvious
+   first thing the user sees on the Support tab — not buried at the
+   bottom of a Credits card behind a 15-entry FAQ. Side-by-side layout
+   with the description on the left and a prominent primary-style
+   button on the right, anchored in a teal-tinted callout. */
+.gridindex-theme-options .gip-project-banner {
+	display:flex;
+	align-items:center;
+	justify-content:space-between;
+	gap:24px;
+	flex-wrap:wrap;
+	padding:20px 24px;
+	margin-bottom:20px;
+	background:linear-gradient(135deg, rgba(20,184,166,.12) 0%, rgba(20,184,166,.04) 100%);
+	border:1px solid rgba(20,184,166,.35);
+	border-radius:var(--gi-radius);
+}
+.gridindex-theme-options .gip-project-banner__copy {
+	flex:1 1 320px;
+	min-width:0;
+}
+.gridindex-theme-options .gip-project-banner__label {
+	display:inline-block;
+	font-size:10px;
+	font-weight:700;
+	letter-spacing:.18em;
+	text-transform:uppercase;
+	color:var(--gi-accent);
+	opacity:1;
+	margin-bottom:6px;
+}
+.gridindex-theme-options .gip-project-banner__title {
+	margin:0 0 6px;
+	font-size:22px;
+	line-height:1.15;
+	letter-spacing:-.005em;
+	font-weight:600;
+}
+.gridindex-theme-options .gip-project-banner__desc {
+	margin:0;
+	font-size:13px;
+	line-height:1.5;
+	opacity:.85;
+	max-width:64ch;
+}
+.gridindex-theme-options .gip-project-banner__cta {
+	flex:0 0 auto;
+}
+.gridindex-theme-options .gip-project-banner__btn {
+	white-space:nowrap;
+	font-weight:600;
+	padding:10px 18px;
+	font-size:14px;
+}
+
+/* ---------- DUPLICATE BANNER on Feeds tab (v1.0.42) ---------- */
+.gridindex-theme-options .gip-dup-banner {
+	display:flex;
+	align-items:center;
+	gap:14px;
+	margin-bottom:14px;
+	padding:12px 14px;
+	background:rgba(239,68,68,.10);
+	border:1px solid rgba(239,68,68,.45);
+	border-radius:var(--gi-radius-sm);
+	color:#fca5a5;
+}
+.gridindex-theme-options .gip-dup-banner__icon {
+	font-size:18px;
+	line-height:1;
+	flex:0 0 auto;
+}
+.gridindex-theme-options .gip-dup-banner__msg {
+	flex:1 1 auto;
+	min-width:0;
+	line-height:1.45;
+}
+.gridindex-theme-options .gip-dup-banner__msg strong { display:block; font-size:13px; color:#fecaca; }
+.gridindex-theme-options .gip-dup-banner__sub { display:block; margin-top:3px; font-size:12px; opacity:.85; }
+.gridindex-theme-options .gip-dup-banner__btn {
+	flex:0 0 auto;
+	padding:6px 12px;
+	font-size:12px;
+	border-color:rgba(239,68,68,.6);
+	color:#fca5a5;
+}
+.gridindex-theme-options .gip-dup-banner__btn:hover {
+	background:rgba(239,68,68,.15);
+	color:#fecaca;
+}
+
+/* ---------- FEED HEALTH CHECK (v1.0.41) ---------- */
+.gridindex-theme-options .gip-health {
+	display:flex;
+	flex-direction:column;
+	border:1px solid var(--gi-border);
+	border-radius:var(--gi-radius-sm);
+	overflow:hidden;
+}
+.gridindex-theme-options .gip-health__head,
+.gridindex-theme-options .gip-health__row {
+	display:grid;
+	grid-template-columns: minmax(0, 1.7fr) 110px 90px 130px;
+	gap:14px;
+	align-items:center;
+	padding:10px 14px;
+	border-bottom:1px solid var(--gi-border);
+}
+.gridindex-theme-options .gip-health__head {
+	background:rgba(255,255,255,.04);
+	font-size:11px;
+	text-transform:uppercase;
+	letter-spacing:.05em;
+	opacity:.7;
+}
+.gridindex-theme-options .gip-health__row:last-child { border-bottom:0; }
+.gridindex-theme-options .gip-health__row--silent { background:rgba(239,68,68,.07); }
+.gridindex-theme-options .gip-health__row--stale  { background:rgba(245,158,11,.05); }
+.gridindex-theme-options .gip-health__row strong { font-weight:600; }
+.gridindex-theme-options .gip-health__url {
+	display:block;
+	margin-top:3px;
+	font:11px/1.3 ui-monospace,Menlo,Consolas,monospace;
+	opacity:.55;
+	overflow:hidden;
+	text-overflow:ellipsis;
+	white-space:nowrap;
+}
+.gridindex-theme-options .gip-health__cell--fetched,
+.gridindex-theme-options .gip-health__cell--count { font-size:12px; opacity:.85; }
+.gridindex-theme-options .gip-health__pill {
+	display:inline-block;
+	padding:3px 9px;
+	border-radius:11px;
+	font-size:11px;
+	font-weight:600;
+	letter-spacing:.02em;
+}
+.gridindex-theme-options .gip-health__pill--silent  { background:rgba(239,68,68,.18); color:#fca5a5; }
+.gridindex-theme-options .gip-health__pill--stale   { background:rgba(245,158,11,.18); color:#fcd34d; }
+.gridindex-theme-options .gip-health__pill--pending { background:rgba(148,163,184,.15); color:#cbd5e1; }
+.gridindex-theme-options .gip-health__pill--ok      { background:rgba(16,185,129,.15); color:#6ee7b7; }
+
+/* ---------- DIAGNOSTICS TABLE ---------- */
+.gridindex-theme-options .gip-diag-table {
+	width:100%;
+	border-collapse:separate;
+	border-spacing:0;
+	background:transparent;
+	border:1px solid var(--gi-border);
+	border-radius:var(--gi-radius-sm);
+	overflow:hidden;
+	table-layout:fixed; /* lets us truncate URL cells with ellipsis */
+}
+.gridindex-theme-options .gip-diag-table thead th {
+	background:rgba(255,255,255,.05);
+	color:inherit;
+	opacity:.9;
+	font:600 11px/1 inherit;
+	text-transform:uppercase;
+	letter-spacing:.08em;
+	padding:12px 14px;
+	text-align:left;
+	border-bottom:1px solid var(--gi-border);
+}
+.gridindex-theme-options .gip-diag-table tbody td {
+	padding:12px 14px;
+	vertical-align:top;
+	font-size:13px;
+	line-height:1.5;
+	border-bottom:1px solid var(--gi-border);
+}
+.gridindex-theme-options .gip-diag-table tbody tr:last-child td { border-bottom:0; }
+.gridindex-theme-options .gip-diag-table tbody tr:nth-child(even) td { background:rgba(255,255,255,.02); }
+.gridindex-theme-options .gip-diag-col-title  { width:38%; }
+.gridindex-theme-options .gip-diag-col-url    { width:34%; }
+.gridindex-theme-options .gip-diag-col-source { width:14%; }
+.gridindex-theme-options .gip-diag-col-status { width:14%; }
+.gridindex-theme-options .gip-diag-cell-title a { font-weight:600; text-decoration:none; }
+.gridindex-theme-options .gip-diag-cell-title a:hover { text-decoration:underline; }
+.gridindex-theme-options .gip-diag-date {
+	margin-top:3px;
+	/* v1.0.32 — was 11px @ .55 opacity, hard to read. */
+	font-size:12px;
+	opacity:.8;
+	letter-spacing:.02em;
+}
+.gridindex-theme-options .gip-diag-url {
+	display:block;
+	max-width:100%;
+	overflow:hidden;
+	text-overflow:ellipsis;
+	white-space:nowrap;
+	font:13px/1.4 ui-monospace,Menlo,Consolas,monospace;
+	color:var(--gi-fg, inherit);
+	/* v1.0.32 — bumped from .85 → 1.0; the ellipsised URL is the most
+	   important content in the row, no reason to fade it. */
+	opacity:1;
+	text-decoration:none;
+}
+.gridindex-theme-options .gip-diag-url:hover { text-decoration:underline; }
+.gridindex-theme-options .gip-diag-missing {
+	color:#ef4444;
+	font-style:italic;
+	font-size:12px;
+}
+.gridindex-theme-options .gip-diag-ok  { color:#10b981; font-weight:700; white-space:nowrap; }
+.gridindex-theme-options .gip-diag-bad { color:#ef4444; font-weight:700; white-space:nowrap; }
