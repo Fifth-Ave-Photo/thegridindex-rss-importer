@@ -1,0 +1,18 @@
+name: Deploy Plugin to WordPress.org
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+jobs:
+  tag:
+    name: New Release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: 10up/action-wordpress-plugin-deploy@stable
+        env:
+          SVN_USERNAME: ${{ secrets.SVN_USERNAME }}
+          SVN_PASSWORD: ${{ secrets.SVN_PASSWORD }}
+          SLUG: thegridindex-rss-importer-v73
