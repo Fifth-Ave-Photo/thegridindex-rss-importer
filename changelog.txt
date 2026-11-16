@@ -1,9 +1,15 @@
 == Older changelog entries ==
 
-TheGridIndex RSS Importer — version history prior to 1.0.70.
+TheGridIndex RSS Importer — version history prior to 1.0.72.
 The current/recent versions live in readme.txt. This file is the archive
 that keeps the plugin directory's readme parser inside its 5,000-char
 changelog limit (see the v1.0.66 entry in readme.txt).
+
+= 1.0.71 =
+* Final PHPCS cleanup: converted the last remaining single-line `phpcs:ignore` directive on the `DROP TABLE` query in `uninstall.php` to a paired `phpcs:disable` / `phpcs:enable` block, matching the pattern used for every other direct `$wpdb` call in the codebase. The previous v1.0.70 directive listed five rule codes on one line, three of which silenced correctly but two (`DirectQuery`, `NoCaching`) still fired in the most recent Plugin Check scan. Wrapping the statement in a disable/enable pair instead of relying on single-line scope makes the suppression deterministic. No functional code changes.
+
+= 1.0.70 =
+* PHPCS follow-up after the v1.0.66 pass: WordPress Plugin Check still surfaced 10 remaining issues because the suppression comments from the v1.0.66 pass used the single-line `phpcs:ignore` directive — which only silences the immediately-next line. Several of the affected statements were multi-line (a multi-line SQL string in `$wpdb->query()`, a multi-line `get_posts()` array argument, a multi-line `$wpdb->delete()` call), so the warnings still fired on the inner lines. Converted those six call sites to use paired `phpcs:disable` / `phpcs:enable` directives that bracket the entire statement, matching the WP.org rule semantics. Also moved three `/* translators: */` block comments to sit immediately above their `_n()` / `esc_html__()` calls (the linter requires the comment to be on the line directly preceding the translation function — previously some were one line too far up because they were placed above the outer `esc_html()` or `printf()` wrapper). The net effect: every issue the previous Plugin Check scan reported should now be properly silenced, with no functional changes to the code.
 
 = 1.0.69 =
 * Hero title now reads "TheGridIndex RSS Importer" — the full plugin display name — instead of the abbreviated "RSS Importer" that v1.0.68 shipped. The abbreviation read as a section heading rather than a plugin title once the eyebrow was removed; the full name makes it unambiguous what the user is looking at and matches the `Plugin Name:` header, the readme title, the credits card, and the WP.org listing. Title font-size tuned from 42px to 36px so the longer 25-character title fits comfortably on one line at typical desktop widths and wraps cleanly at the brand/product boundary on narrower screens.

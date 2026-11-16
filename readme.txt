@@ -2,9 +2,9 @@
 Contributors: fifthavesupport
 Tags: rss, importer, feeds, syndication, news
 Requires at least: 6.0
-Tested up to: 6.9
+Tested up to: 6.10
 Requires PHP: 7.4
-Stable tag: 1.0.74
+Stable tag: 1.0.75
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -171,6 +171,10 @@ Yes. Feeds tab → "+ Add Feed" → paste the RSS URL. Form auto-saves about 800
 
 == Changelog ==
 
+= 1.0.75 =
+* Compatibility — tested against WordPress 6.10. No behavior changes; this bump exists so the "has not been tested with your version" warning doesn't appear on 6.10 installs. `Requires at least` stays at 6.0 and `Requires PHP` stays at 7.4 — the plugin uses no APIs newer than those floors and lowering them would lock out installs for no benefit.
+* WP.org compliance — removed `README.md` and `SETUP.md` from the shipped zip. Those are GitHub-repo documentation files (repo structure, SVN deployment walkthrough, application-password setup instructions) that belong in the project's source tree, not in the plugin users install. The shipped zip now contains only the files a user needs: the main plugin file, `readme.txt`, `changelog.txt`, `uninstall.php`, and the `assets/` folder (admin stylesheet, admin script, silence-is-golden index guards).
+
 = 1.0.74 =
 * Readme — rewrote the `== Screenshots ==` captions to match the planned 8-shot WP.org screenshot package: hero/Feeds tab, Catalog browsing, custom-URL feed addition, Settings, Diagnostics health table, imported posts in the WP editor, front-end view with The Grid Index theme active, and a light-mode shot. No code changes; readme-only.
 
@@ -180,11 +184,5 @@ Yes. Feeds tab → "+ Add Feed" → paste the RSS URL. Form auto-saves about 800
 = 1.0.72 =
 * External services disclosure — restructured the per-publisher table in the readme to point at each publisher's home page only, instead of hard-coded direct terms-of-service and privacy-policy URLs. WP.org review correctly flagged 12 dead URLs in the v1.0.71 readme (Al Jazeera, CBS/Paramount, Time, 9to5Mac, ZDNet/Red Ventures × 2, Financial Times × 2, Deutsche Welle × 2, France 24 × 2 — all 404 or 503). Direct legal-page URLs at third-party publishers are inherently unstable: publishers reorganize their help centers, migrate to parent-company legal portals, and change CMS paths regularly. Hard-coding 86 such URLs across 43 publishers would create permanent maintenance debt that no solo developer can keep up with, and the next round of rot would surface another 12 dead links a few months from now. The home-page-only structure is structurally correct: every publisher's site footer carries "Terms" and "Privacy" links to their current legal pages, those footer links are the publisher's own source of truth, and home-page URLs do not 404. The readme intro to the publisher table now explicitly walks the reader through this pattern (open the publisher's home, use the footer links) and names parent companies (Condé Nast, Dow Jones, NBCUniversal, Vox Media, Disney/Paramount, Yahoo, Mansueto Ventures, Red Ventures) where the publisher's legal pages live on the parent's domain. WP.org's example pattern in the External services guideline shows direct links for a single-service plugin; this plugin connects to 43 independent third-party publishers, which is a structurally different case.
 
-= 1.0.71 =
-* Final PHPCS cleanup: converted the last remaining single-line `phpcs:ignore` directive on the `DROP TABLE` query in `uninstall.php` to a paired `phpcs:disable` / `phpcs:enable` block, matching the pattern used for every other direct `$wpdb` call in the codebase. The previous v1.0.70 directive listed five rule codes on one line, three of which silenced correctly but two (`DirectQuery`, `NoCaching`) still fired in the most recent Plugin Check scan. Wrapping the statement in a disable/enable pair instead of relying on single-line scope makes the suppression deterministic. No functional code changes.
 
-= 1.0.70 =
-* PHPCS follow-up after the v1.0.66 pass: WordPress Plugin Check still surfaced 10 remaining issues because the suppression comments from the v1.0.66 pass used the single-line `phpcs:ignore` directive — which only silences the immediately-next line. Several of the affected statements were multi-line (a multi-line SQL string in `$wpdb->query()`, a multi-line `get_posts()` array argument, a multi-line `$wpdb->delete()` call), so the warnings still fired on the inner lines. Converted those six call sites to use paired `phpcs:disable` / `phpcs:enable` directives that bracket the entire statement, matching the WP.org rule semantics. Also moved three `/* translators: */` block comments to sit immediately above their `_n()` / `esc_html__()` calls (the linter requires the comment to be on the line directly preceding the translation function — previously some were one line too far up because they were placed above the outer `esc_html()` or `printf()` wrapper). The net effect: every issue the previous Plugin Check scan reported should now be properly silenced, with no functional changes to the code.
-
-
-For versions prior to 1.0.70, see `changelog.txt` shipped in the plugin folder.
+For versions prior to 1.0.72, see `changelog.txt` shipped in the plugin folder.

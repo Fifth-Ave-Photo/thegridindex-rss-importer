@@ -3,7 +3,7 @@
  * Plugin Name:       TheGridIndex RSS Importer
  * Plugin URI:        https://github.com/Fifth-Ave-Photo/the-grid-index-rss-importer
  * Description:       Pull headlines from external RSS feeds into WordPress. Designed to pair with The Grid Index theme — imported posts are tagged with canonical source meta so the theme's "Read at Source" attribution lights up automatically. Works as a standalone importer if the theme isn't active.
- * Version:           1.0.74
+ * Version:           1.0.75
  * Requires at least: 6.0
  * Requires PHP:      7.4
  * Author:            Fifth Avenue Photographic
@@ -42,7 +42,7 @@
 defined( 'ABSPATH' ) || exit;
 
 if ( ! defined( 'THEGRIDINDEX_RSS_IMPORTER_VERSION' ) ) {
-	define( 'THEGRIDINDEX_RSS_IMPORTER_VERSION', '1.0.74' );
+	define( 'THEGRIDINDEX_RSS_IMPORTER_VERSION', '1.0.75' );
 }
 
 // v1.0.3: Removed the class_exists guard. If something else in the install
